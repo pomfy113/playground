@@ -1,6 +1,15 @@
 def answer(h, q):
+    errorcheck(h, q)
     flux = btree(h)
     return flux.find(q)
+
+def errorcheck(h, q):
+    """Within bounds."""
+    if 1 > h or h > 30:
+        raise ValueError
+    for item in q:
+        if 1 > item or item > (2**h-1):
+            raise ValueError
 
 class btree_node(object):
     """Node set-up."""
@@ -17,45 +26,66 @@ class btree(object):
 
         # Build an empty btree based on height
         self.build(height)
+        print("Build done")
 
         # Used for labeling
         self.counter = 0
         # Labeling the nodes via post-order traversal
         self.build_labels(self.root)
 
-    def build(self, height, depth=0, node=None):
+
+    def build(self, height, node=None):
         # If done with building
-        if depth == height:
-            return
-        else:
-            # First things first: the root
-            if depth == 0:
-                depth += 1
+        if height > 0:
+            if node is None:
                 node = btree_node()
                 self.root = node
-                self.size += 1
-                # Recursive call
-                self.build(height, depth, node)
+                height -= 1
+                self.build(height, node)
             else:
-                # Going down one!
-                depth += 1
-                # Make left node, then build down
+                height -= 1
                 node.left = btree_node()
-                node.left.parent = node
-                self.size += 1
-                self.build(height, depth, node.left)
-
-                # Same; make right node, then build down
+                self.build(height, node.left)
                 node.right = btree_node()
-                node.right.parent = node
-                self.size += 1
-                self.build(height, depth, node.right)
+                self.build(height, node.right)
+        else:
+            return
+
+
+    # def build(self, height, depth=0, node=None):
+    #     # If done with building
+    #     if depth == height:
+    #         return
+    #     else:
+    #         # First things first: the root
+    #         if depth == 0:
+    #             depth += 1
+    #             node = btree_node()
+    #             self.root = node
+    #             self.size += 1
+    #             # Recursive call
+    #             self.build(height, depth, node)
+    #         else:
+    #             # Going down one!
+    #             depth += 1
+    #             # Make left node, then build down
+    #             node.left = btree_node()
+    #             node.left.parent = node
+    #             self.size += 1
+    #             self.build(height, depth, node.left)
+    #
+    #             # Same; make right node, then build down
+    #             node.right = btree_node()
+    #             node.right.parent = node
+    #             self.size += 1
+    #             self.build(height, depth, node.right)
+
 
     def build_labels(self, node):
         """Labeling using post-order."""
-        if node.left is not None:
+        if node.left:
             self.build_labels(node.left)
-        if node.right is not None:
+        if node.right:
             self.build_labels(node.right)
         # Labeling!
         node.data = self._traverse_helper()
@@ -91,6 +121,6 @@ class btree(object):
                 self.search(node.right, item, visit, parent)
 
 
-h = 15
+h = 20
 q = [7, 3, 5, 1]
 print(answer(h, q))
