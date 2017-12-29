@@ -5,34 +5,52 @@ from fractions import Fraction
 def answer(fuel):
     terminal = []
     unstable = []
+    unstable_rows = []
     matrix = []
     # Let's start with the unstable fractions
-    for row in fuel:
+    for index, row in enumerate(fuel):
         rowtotal = sum(row)
         if rowtotal:    # If it's not 0!
             newrow = []
+            unstable_rows.append(index)
             for item in row:
                 if item:
                     newrow.append(Fraction(item, rowtotal))
                 else:
                     newrow.append(0)
             unstable.append(newrow)
-        # else:
-        #     # There's no way out of these ones
-        #     terminal.append(row)
-        #     term_x = len(terminal) - 1
-        #     terminal[term_x][term_x] = 1
+
+    print("Unstable rows", unstable_rows)
+
     # Let's create the matrices
 
     # Sub matrices; those that lead to the end
-    sub_matrix = []
-    for x in unstable:
-        sub_matrix.append(x[-len(unstable):])
+    sub_matrixQ = []
+    sub_matrixR = []
+    for y in xrange(len(unstable)):
+        new_rowQ = []
+        new_rowR = []
+        for x in xrange(len(unstable[0])):
+            if x in unstable_rows:
+                new_rowQ.append(unstable[y][x])
+            else:
+                new_rowR.append(unstable[y][x])
+        if new_rowQ:
+            sub_matrixQ.append(new_rowQ)
+        if new_rowR:
+            sub_matrixR.append(new_rowR)
+    print("================")
+    print("Sub-matrix Q")
+    for x in sub_matrixQ:
+        print(x)
+    print("Sub-matrix R")
+    for x in sub_matrixR:
+        print(x)
 
-    sm_x = len(sub_matrix[0])
-    sm_y = len(sub_matrix)
+    sm_x = len(sub_matrixQ[0])
+    sm_y = len(sub_matrixQ)
 
-    # We're trimming identity to size of sub_matrix.
+    # We're trimming identity to size of sub_matrixQ.
     # Height/Width are inverses
     identity_matrix = []
     for x in xrange(sm_y):
@@ -41,34 +59,63 @@ def answer(fuel):
             identity_matrix[x][x] = 1
 
 
-    print(sub_matrix)
-    print(identity_matrix)
+    print("================")
+    print("Identity-matrix")
+    for x in identity_matrix:
+        print(x)
     print("================")
 
-    probabilities = []
+    # Doing this prior to matrix multiplication
+    pre_mult = []
     for y in xrange(sm_y):
         temp = []
         for x in xrange(sm_x):
-            total_sum = identity_matrix[x][y] - sub_matrix[x][y]
+            total_sum = identity_matrix[x][y] - sub_matrixQ[x][y]
             temp.append(total_sum)
-        probabilities.append(temp)
-    print(probabilities)
+        pre_mult.append(temp)
+
+    print("================")
+    print("Pre_mult")
+    for x in pre_mult:
+        print(x)
+    print("================")
+
+    testing = [[1, Fraction(-1, 2)],
+        [Fraction(-4,9), 1]]
 
 
-    # for y in xrange(unstable_y):
-    #     temp = []
-    #     for x in xrange(terminal_x, unstable_x):
-    #         print(terminal[y][x], unstable[y][x])
-    #         new_sum = terminal[y][x] - unstable[y][x]
-    #         temp.append(new_sum)
-    #     sub_matrix.append(temp)
-    # print(sub_matrix)
+    # Inverse
+    # CURRENTLY ONLY WORKS FOR 2x2
+    # FIX THIS LATER
+
+    pre_mult[0][0], pre_mult[1][1] = pre_mult[1][1], pre_mult[0][0]
+    pre_mult[0][1] = pre_mult[0][1] * -1
+    pre_mult[1][0] = pre_mult[1][0] * -1
+
+    print(pre_mult)
 
 
-    # for x in terminal:
-    #     print(x)
-    # for x in unstable:
-    #     print(x)
+    result = 1 / ((pre_mult[0][0] * pre_mult[1][1]) - (pre_mult[0][1] * pre_mult[1][0]))
+
+    for y in xrange(len(pre_mult)):
+        for x in xrange(len(pre_mult)):
+            pre_mult[y][x] = result * pre_mult[y][x]
+    print(pre_mult)
+
+
+    final = []
+
+    # for y in xrange(len(sub_matrixR)):
+    #     row = []
+    #     for x in xrange(len(sub_matrixR[0])):
+    #         # print(x, y)
+    #         total = pre_mult[y][x] * sub_matrixR[x][y]
+    #         row.append(total)
+    #     final.append(row)
+
+
+
+
 
 
 
