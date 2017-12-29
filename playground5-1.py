@@ -1,103 +1,118 @@
 from collections import deque
+class Node:
+    def __init__(self, x, y, saldo, grid):
+        self.x = x
+        self.y = y;
+        self.saldo = saldo
+        self.grid = grid
 
-def memodict(f):
-     """ Memoization decorator for a function taking a single argument """
-     class memodict(dict):
+    def __hash__(self):
+        return self.x ^ self.y
 
-        def __missing__(self, key):
-           ret = self[key] = f(key)
-           return ret
-     return memodict().__getitem__
+    def __eq__(self, other):
+        return self.x == other.x and self.y == other.y
+
+    def get_neighbors(self):
+        neighbors = []
+        x = self.x
+        y = self.y
+        saldo = self.saldo
+        grid = self.grid
+        rows = len(grid)
+        columns = len(grid[0])
+
+        if x > 0:
+            wall = grid[y][x - 1] == 1
+            if wall:
+                if saldo > 0:
+                    neighbors.append(Node(x - 1, y, saldo - 1, grid))
+            else:
+                neighbors.append(Node(x - 1, y, saldo, grid))
+
+        if x < columns - 1:
+            wall = grid[y][x + 1] == 1
+            if wall:
+                if saldo > 0:
+                    neighbors.append(Node(x + 1, y, saldo - 1, grid))
+            else:
+                neighbors.append(Node(x + 1, y, saldo, grid))
+
+        if y > 0:
+            wall = grid[y - 1][x] == 1
+            if wall:
+                if saldo > 0:
+                    neighbors.append(Node(x, y - 1, saldo - 1, grid))
+            else:
+                neighbors.append(Node(x, y - 1, saldo, grid))
+
+        if y < rows - 1:
+            wall = grid[y + 1][x]
+            if wall:
+                if saldo > 0:
+                    neighbors.append(Node(x, y + 1, saldo - 1, grid))
+            else:
+                neighbors.append(Node(x, y + 1, saldo, grid))
+
+        return neighbors
 
 
-@memodict
-def adjacent_to((maze_dim, point)):
-     neighbors = (
-         (point[0] - 1, point[1]),
-         (point[0], point[1] - 1),
-         (point[0], point[1] + 1),
-         (point[0] + 1, point[1]))
+class GridEscapeRouter:
 
-     return [p for p in neighbors if 0 <= p[0] < maze_dim[0] and 0 <= p[1] < maze_dim[1]]
+    def __init__(self, grid, saldo):
+        self.grid = grid
+        self.rows = len(grid)
+        self.columns = len(grid[0])
+        self.saldo = saldo
 
+    def get_escape_route_length(self):
+        source = Node(0, 0, self.saldo, self.grid)
+        queue = deque([source])
+        distance_map = {source: 1}
 
+        while queue:
+            current_node = queue.popleft()
 
+            if current_node.x == self.columns - 1 and\
+                current_node.y == self.rows - 1:
+                return distance_map[current_node]
 
-def removable(maz, ii, jj):
-     counter = 0
-     for p in adjacent_to(((len(maz), len(maz[0])), (ii, jj))):
-         if not maz[p[0]][p[1]]:
-             if counter:
-                 return True
-             counter += 1
-     return False
+            for child_node in current_node.get_neighbors():
+                if child_node not in distance_map.keys():
+                    distance_map[child_node] = distance_map[current_node] + 1
+                    queue.append(child_node)
 
+        return 1000 * 1000 * 1000 # Cannot escape
 
-def answer(maze):
+def milliseconds():
+    return int(round(time.time() * 1000))
 
-     path_length = 0
-
-     if not maze:
-         return
-
-     dims = (len(maze), len(maze[0]))
-     end_point = (dims[0]-1, dims[1]-1)
-
-     # list of walls that can be removed
-     passable_walls = set()
-     for i in xrange(dims[0]):
-         for j in xrange(dims[1]):
-             if maze[i][j] == 1 and removable(maze, i, j):
-                 passable_walls.add((i, j))
-
-     shortest_path = 0
-     print(passable_walls)
-     best_possible = dims[0] + dims[1] - 1
-
-     path_mat = [[None] * dims[1] for _ in xrange(dims[0])]  # tracker      matrix for shortest path
-     path_mat[dims[0]-1][dims[1]-1] = 0  # set the starting point to destination (lower right corner)
-
-     for wall in passable_walls:
-         temp_maze = maze
-         if wall:
-             temp_maze[wall[0]][wall[1]] = 0
-
-         stat_mat = [['-'] * dims[1] for _ in xrange(dims[0])]  # status of visited and non visited cells
-
-         q = deque()
-         q.append(end_point)
-
-         while q:
-             curr = q.popleft()
-
-             if curr == (0,0):
-                 break
-
-             for next in adjacent_to((dims, curr)):
-                 if temp_maze[next[0]][next[1]] == 0:  # Not a wall
-                     temp = path_mat[curr[0]][curr[1]] + 1
-                     if temp < path_mat[next[0]][next[1]] or path_mat[next[0]][next[1]] == None:  # there is a shorter path to this cell
-                         path_mat[next[0]][next[1]] = temp
-                     if stat_mat[next[0]][next[1]] != '+':  # Not visited yet
-                         q.append(next)
-
-             stat_mat[curr[0]][curr[1]] = '+'  # mark it as visited
-
-         if path_mat[0][0]+1 <= best_possible:
-             break
-     for i in range(len(path_mat[0])):
-         print(path_mat[i])
-     if shortest_path == 0 or path_mat[0][0]+1 < shortest_path:
-         shortest_path = path_mat[0][0]+1
-
-     return shortest_path
 
 maze = [
-    [0, 0, 0, 0, 0, 0],
-    [1, 1, 1, 1, 1, 0],
-    [0, 0, 0, 0, 0, 0],
-    [0, 1, 1, 1, 1, 1],
-    [0, 1, 1, 1, 1, 1],
-    [0, 0, 0, 0, 0, 0]
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 1, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+    [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     ]
-print(answer(maze))
+
+start_time = milliseconds()
+router = GridEscapeRouter(maze, 1)
+
+route_length = router.get_escape_route_length();
+end_time = milliseconds()
+
+print "Route length", route_length, "in", end_time - start_time, "milliseconds."

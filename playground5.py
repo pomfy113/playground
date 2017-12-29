@@ -54,12 +54,15 @@ def isremovable(dim, maze, x, y):
 @memoize
 def adjacent_blocks(dim, point):
     """Set up valid adjacent blocks."""
-    adjacent_blocks = (
-        (point[0]+1, point[1]),     # Right block
-        (point[0], point[1]-1),     # Bottom block
-        (point[0]-1, point[1]),     # Left block
-        (point[0], point[1]+1)      # Top block
-        )
+    adjacent_blocks = []
+    if point[0] > 0:
+        adjacent_blocks.append((point[0]+1, point[1]))
+    if point[0] < dim[0]:
+        adjacent_blocks.append((point[0]-1, point[1]))
+    if point[1] > 0:
+        adjacent_blocks.append((point[0], point[1]-1))
+    if point[1] < dim[1]:
+        adjacent_blocks.append((point[0], point[1]+1))
 
     # Check if it's within bounds of maze dimensions
     return [block for block in adjacent_blocks if 0 <= block[0] < dim[0] and 0 <= block[1] < dim[1]]
@@ -86,7 +89,6 @@ def pathfinding(dims, maze, passable):
         if wall:
             temp_maze[wall[0]][wall[1]] = 0
 
-
         # For checking visited/non-visited
         stat_mat = [['-'] * dims[1] for _ in xrange(dims[0])]
 
@@ -94,10 +96,12 @@ def pathfinding(dims, maze, passable):
         # Originally list, but deques have O(n) queue/dequeue
         queue = deque()
         queue.append(end)
-        moves = 0
+
         while queue:
             # Dequeue; where we go next
             current = queue.popleft()
+            curr_x = current[0]
+            curr_y = current[1]
 
             # We hit the beginning point
             if current == (0, 0):
@@ -110,23 +114,29 @@ def pathfinding(dims, maze, passable):
                 # Check if not a wall
                 if temp_maze[next_x][next_y] == 0:
                     # If so, that's our next move! Add 1 to move
-                    moves = mazemap[current[0]][current[1]] + 1
-                    if moves < mazemap[next_x][next_y] or mazemap[next_x][next_y] is None:  # there is a shorter path to this cell
+                    moves = mazemap[curr_x][curr_y] + 1
+                    # If there's a shorter path...
+                    if best != 0 and moves > best:
+                        break
+                    if moves < mazemap[next_x][next_y] or mazemap[next_x][next_y] is None:
                         mazemap[next_x][next_y] = moves
-                    if stat_mat[next_x][next_y] != 'x':  # Not visited yet
+                    # Not visited yet
+                    if stat_mat[next_x][next_y] != '~':
                         queue.append(nextblock)
-
-            stat_mat[current[0]][current[1]] = 'x'  # mark it as visited
+            stat_mat[curr_x][curr_y] = '~'
 
         if mazemap[0][0]+1 <= (dims[0] + dims[1] - 1):
             break
-    for i in range(len(mazemap[0])):
+        print(best)
+
+    for i in xrange(len(mazemap)):
         print(mazemap[i])
 
     if best == 0 or mazemap[0][0]+1 < best:
         best = mazemap[0][0]+1
 
         return best
+
 
 maze = [
     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
