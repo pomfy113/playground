@@ -1,12 +1,11 @@
 """Enter the Matrix."""
 from collections import deque
-from fractions import Fraction
+from fractions import Fraction, gcd
 
 def answer(fuel):
-    terminal = []
     unstable = []
     unstable_rows = []
-    matrix = []
+
     # Let's start with the unstable fractions
     for index, row in enumerate(fuel):
         rowtotal = sum(row)
@@ -20,8 +19,16 @@ def answer(fuel):
                     newrow.append(0)
             unstable.append(newrow)
 
+    if not unstable_rows:
+        total = []
+        for i in xrange(len(fuel)+1):
+            total.append(1)
+        return total
+
     print("Unstable rows", unstable_rows)
 
+    if not unstable_rows:
+        return
     # Let's create the matrices
 
     # Sub matrices; those that lead to the end
@@ -70,7 +77,7 @@ def answer(fuel):
     for y in xrange(sm_y):
         temp = []
         for x in xrange(sm_x):
-            total_sum = identity_matrix[x][y] - sub_matrixQ[x][y]
+            total_sum = identity_matrix[y][x] - sub_matrixQ[y][x]
             temp.append(total_sum)
         pre_mult.append(temp)
 
@@ -92,27 +99,55 @@ def answer(fuel):
     pre_mult[0][1] = pre_mult[0][1] * -1
     pre_mult[1][0] = pre_mult[1][0] * -1
 
-    print(pre_mult)
-
 
     result = 1 / ((pre_mult[0][0] * pre_mult[1][1]) - (pre_mult[0][1] * pre_mult[1][0]))
 
     for y in xrange(len(pre_mult)):
         for x in xrange(len(pre_mult)):
             pre_mult[y][x] = result * pre_mult[y][x]
-    print(pre_mult)
+    print("================")
+    print("Post_mult")
+    for x in pre_mult:
+        print(x)
+    print("================")
 
-
+    print("===========")
+    print("Sub-matrix R")
+    for x in sub_matrixR:
+        print(x)
+    print("===========")
     final = []
 
-    # for y in xrange(len(sub_matrixR)):
-    #     row = []
-    #     for x in xrange(len(sub_matrixR[0])):
-    #         # print(x, y)
-    #         total = pre_mult[y][x] * sub_matrixR[x][y]
-    #         row.append(total)
-    #     final.append(row)
+    for y in xrange(len(sub_matrixR)):
+        row = []
+        to_mult = pre_mult[y]
+        for x in xrange(len(sub_matrixR[0])):
+            total = 0
+            for index, item in enumerate(to_mult):
+                total += (sub_matrixR[index][x] * item)
+            row.append(total)
+        final.append(row)
+    print("===========")
+    numer = []
+    denom = []
+    print(final)
+    for x in final[0]:
+        denom.append(x.denominator)
 
+    lcm = 1
+    for x in denom:
+        lcm = lcm * x/gcd(lcm, x)
+
+    for x in final[0]:
+        num = x.numerator
+        dem = x.denominator
+        if num and dem != lcm:
+            num = num * (lcm/dem)
+        numer.append(num)
+
+    numer.append(lcm)
+
+    return numer
 
 
 
@@ -128,4 +163,11 @@ fuel = [
   [0,0,0,0,0,0],  # s5 is terminal
 ]
 
-answer(fuel)
+# fuel = [
+#     [0, 2, 1, 0, 0],
+#     [0, 0, 0, 3, 4],
+#     [0, 0, 0, 0, 0],
+#     [0, 0, 0, 0, 0],
+#     [0, 0, 0, 0, 0]]
+
+print(answer(fuel))
