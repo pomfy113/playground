@@ -1,13 +1,26 @@
 import math
 
+def line(p1, p2):
+    """Grab the... somethings."""
+    A = (p1[1] - p2[1])
+    B = (p2[0] - p1[0])
+    C = (p1[0]*p2[1] - p2[0]*p1[1])
+    return A, B, -C
+
+# The lines and their factors
+CEILING = line((-1, -1), (0, -1))
+WALL_L = line((-1, -1), (-1, 0))
+WALL_R = None
+FLOOR = None
 
 def answer(dimensions, your_position, guard_position, distance):
+    """Begin combat protocol."""
+    global WALL_R, FLOOR
+    WALL_R = line((dimensions[0]+1, -1), (dimensions[0]+1, 0))
+    FLOOR = line((0, dimensions[1]+1), (-1, dimensions[1]+1))
+
     your_x = your_position[0]
     your_y = your_position[1]
-
-    guard_x = guard_position[0]
-    guard_y = guard_position[1]
-    print(your_position, guard_position)
     distance_between = get_distance(your_position, guard_position)
 
     # Easiest cases; enough distance or not enough distance
@@ -23,79 +36,86 @@ def answer(dimensions, your_position, guard_position, distance):
     laser_x = your_x
     laser_y = your_y - distance
     answers.append((laser_x, laser_y))
-    print("My position:", your_position)
-    print("Laser direction:", (laser_x, laser_y))
-    print("Target position:", guard_position)
-    result = reflect(dimensions, your_position, (laser_x, laser_y), distance)
-    print(is_on(your_position, (laser_x, laser_y), guard_position))
-    print("======================")
 
     while laser_y != your_y:
         laser_x += 1
         laser_y = your_y - missing_angle(laser_x, distance)  # Offset
-        # result = reflect(dimensions, (laser_x, laser_y), distance)
-
+        answers.append((laser_x, laser_y))
+    for item in answers:
         print("My position:", your_position)
         print("Laser direction:", (laser_x, laser_y))
         print("Target position:", guard_position)
-        result = reflect(dimensions, your_position, (laser_x, laser_y), distance)
-
+        reflect(dimensions, your_position, guard_position, item, distance)
         print(is_on(your_position, (laser_x, laser_y), guard_position))
         print("======================")
-        answers.append((laser_x, laser_y))
-
-
     return answers
 
-def reflect(dim, origin, laser, dist):
+
+def reflect(dim, origin, target, laser, dist):
     # Going toward ceiling
-    l1 = line(origin, laser)
-    # Ceiling
-    if origin[1] > laser[1]:
-        print("Towards ceiling")
-        # There's an offset of -1
-        l2 = line((-1, -1), (0, -1))
-        l3 = None
-        if laser[0] == origin[0]:
-            print("Straight up")
-        if laser[0] > origin[0]:
-            print("and to the right")
-            l3 = line((dim[0]+1, -1), (dim[0]+1, 0))
+    laser_line = line(origin, laser)
+    if is_on(origin, laser, target):
+        print("YOU HIT THE TARGET!")
 
-        elif laser[0] < origin[0]:
-            print("And to the left")
-            l3 = line((0, 0), (0, dim[1]))
-
-        if l3:
-            wall_hit = intersection(l1, l3)
-            print("Hits wall at", wall_hit, get_distance(origin, wall_hit))
-
-        ceil_hit = intersection(l1, l2)
-        print("Hits ceiling at", ceil_hit, get_distance(origin, ceil_hit))
-
-
-
-
-    # Floor
+    # See if floor or ceiling
+    if origin[1] == laser[1]:
+        vert_line = None
+    elif origin[1] > laser[1]:
+        vert_line = CEILING
+        vert_hit = intersection(laser_line, vert_line)
+        vert_dist = get_distance(origin, vert_hit)
     elif origin[1] < laser[1]:
-        print("Towards floor")
-    else:
-        print("Straight right")
+        vert_line = FLOOR
+        vert_hit = intersection(laser_line, vert_line)
+        vert_dist = get_distance(origin, vert_hit)
 
 
-    # elif get_distance((x*dist)-0, (y*dist)-0) > dist:
+    # See if it goes left or right
+    if laser[0] == origin[0]:
+        wall_line = None
+    elif laser[0] > origin[0]:
+        wall_line = WALL_R
+        wall_hit = intersection(laser_line, wall_line)
+        wall_dist = get_distance(origin, wall_hit)
+    elif laser[0] < origin[0]:
+        wall_line = WALL_L
+        wall_hit = intersection(laser_line, wall_line)
+        wall_dist = get_distance(origin, wall_hit)
+
+    # Where do we hit?
+    # Vertical; Only floor/ceiling
+    if vert_line and not wall_line:
+        if vert_line == FLOOR:
+            print("Hitting that floor")
+        elif vert_line == CEILING:
+            print("Hitting that ceiling")
+
+    # Horizontal; only hitting either wall
+    elif not vert_line and wall_line:
+        print("Only hitting walls")
+
+    # You're going to end up hitting both eventually
+    elif vert_line and wall_line:
+        print("You're hitting both!")
+        # Wall is further
+        if vert_dist < wall_dist:
+            if vert_line == FLOOR:
+                print("... but you're hitting the floor first")
+            elif vert_line == CEILING:
+                print("... but you're hitting the ceiling first")
+        # Floor/Ceiling is further
+        elif vert_dist > wall_dist:
+            if wall_line == WALL_L:
+                print("... but you're hitting the left wall first")
+            elif wall_line == WALL_R:
+                print("... but you're hitting the right wall first")
+
 
 # INTERSECTIONS: I'll need to learn about this later
-def line(p1, p2):
-    A = (p1[1] - p2[1])
-    B = (p2[0] - p1[0])
-    C = (p1[0]*p2[1] - p2[0]*p1[1])
-    return A, B, -C
-
-def intersection(L1, L2):
-    D  = L1[0] * L2[1] - L1[1] * L2[0]
-    Dx = L1[2] * L2[1] - L1[1] * L2[2]
-    Dy = L1[0] * L2[2] - L1[2] * L2[0]
+def intersection(laser_line, vert_line):
+    D  = laser_line[0] * vert_line[1] - laser_line[1] * vert_line[0]
+    Dx = laser_line[2] * vert_line[1] - laser_line[1] * vert_line[2]
+    Dy = laser_line[0] * vert_line[2] - laser_line[2] * vert_line[0]
     if D != 0:
         x = Dx / D
         y = Dy / D
