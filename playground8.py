@@ -1,5 +1,5 @@
 import math
-
+from fraction import Fraction
 def line(p1, p2):
     """Grab the... somethings."""
     A = (p1[1] - p2[1])
@@ -8,8 +8,14 @@ def line(p1, p2):
     return A, B, -C
 
 # The lines and their factors
-CEILING = line((-1, -1), (0, -1))
-WALL_L = line((-1, -1), (-1, 0))
+# Testing something out with boundaries
+# CEILING = line((-1, -1), (0, -1))
+# WALL_L = line((-1, -1), (-1, 0))
+# WALL_R = None
+# FLOOR = None
+
+CEILING = line((0,0), (1,0))
+WALL_L = line((0,0), (0, 1))
 WALL_R = None
 FLOOR = None
 
@@ -32,12 +38,15 @@ def hitbox_set(your_x, your_y, guard_x, guard_y):
 def answer(dimensions, your_position, guard_position, distance):
     """Begin combat protocol."""
     global WALL_R, FLOOR
-    global YOU, GUARD
+    global YOUR, GUARD
+    global DIST
 
-    WALL_R = line((dimensions[0]+1, -1), (dimensions[0]+1, 0))
-    FLOOR = line((0, dimensions[1]+1), (-1, dimensions[1]+1))
+    DIST = distance
 
-    YOU = your_position
+    WALL_R = line((dimensions[0], 0.0), (dimensions[0], 10.0))
+    FLOOR = line((0.0, dimensions[1]), (10.0, dimensions[1]))
+
+    YOUR = your_position
     GUARD = guard_position
 
     your_x = your_position[0]
@@ -56,85 +65,121 @@ def answer(dimensions, your_position, guard_position, distance):
         return 1
 
     # Let's get started
+    test_set = [[1, 0], [1, 2], [1, -2], [3, 2], [3, -2], [-3, 2]]
     answers = []
-
-    # Angles where it should hit
-    laser_x = your_x
-    laser_y = your_y - distance
-    answers.append((laser_x, laser_y))
-    answers.append((3, -2))
-    while laser_y != your_y:
-        laser_x += 1
-        laser_y = your_y - int(missing_angle(laser_x, distance))  # Offset
-        answers.append((laser_x, laser_y))
+    for item in test_set:
+        answers.append((float(your_position[0]+item[0]), float(your_position[1]+item[1])))
 
 
-    # laser_x = your_x - distance
-    # laser_y = your_y
-    # while laser_x != your_x:
+    # # Angles where it should hit
+    # laser_x = your_x
+    # laser_y = your_y - distance
+    # answers.add((laser_x, laser_y))
+    # while laser_y != your_y:
     #     laser_x += 1
     #     laser_y = your_y - int(missing_angle(laser_x, distance))  # Offset
-    #     answers.append((laser_x, laser_y))
+    #     answers.add((laser_x, laser_y))
+    #
+    #
+    # laser_x = your_x - distance
+    # laser_y = your_y
+    # answers.add((laser_x, laser_y))
+    # while laser_x != your_x:
+    #     laser_y += 1
+    #     laser_x = your_x - int(missing_angle(laser_y, distance))  # Offset
+    #     answers.add((laser_x, laser_y))
 
 
     for item in answers:
         print("My position:", your_position)
         print("Laser direction:", item)
         print("Target position:", guard_position)
+
         reflect(dimensions, your_position, item, distance)
         print("======================")
     return answers
 
 def hit_check(laser, laser_line):
-    print("PRINTING: UP, DOWN, LEFT, RIGHT")
     inter_U = intersection(laser_line, GUARD_U)
-    print(inter_U)
-
     if inter_U and GUARD[0] - 0.5 <= inter_U[0] <= GUARD[0] + 0.5:
-        print("* * * * * * * * * * * * * * * * * * * *")
         print("* * * * * REFLECT HIT(TOP) * * * * *")
-        print("* * * * * * * * * * * * * * * * * * * *")
-        return True
+        return inter_U
 
     inter_D = intersection(laser_line, GUARD_D)
-    print(inter_D)
-
     if inter_D and GUARD[0] - 0.5 <= inter_D[0] <= GUARD[0] + 0.5:
-        print("* * * * * * * * * * * * * * * * * * * *")
         print("* * * * * REFLECT HIT (BOTTOM) * * * * *")
-        print("* * * * * * * * * * * * * * * * * * * *")
-        return True
+        return inter_D
 
     inter_L = intersection(laser_line, GUARD_L)
-    print(inter_L)
-
     if inter_L and GUARD[1] - 0.5 <= inter_L[1] <= GUARD[1] + 0.5:
-        print("* * * * * * * * * * * * * * * * * * * *")
         print("* * * * * REFLECT HIT (LEFT) * * * * *")
-        print("* * * * * * * * * * * * * * * * * * * *")
-        return True
+        return inter_L
 
     inter_R = intersection(laser_line, GUARD_R)
-    print(inter_R)
-    if inter_L and GUARD[1] - 0.5 <= inter_R[1] <= GUARD[1] + 0.5:
-        print("* * * * * * * * * * * * * * * * * * * *")
+    if inter_R and GUARD[1] - 0.5 <= inter_R[1] <= GUARD[1] + 0.5:
         print("* * * * * REFLECT HIT (RIGHT) * * * * *")
-        print("* * * * * * * * * * * * * * * * * * * *")
-        return True
+        return inter_R
+
+    return False
+
+def self_hit_check(laser, laser_line):
+    print(laser, YOUR)
+    inter_U = intersection(laser_line, YOUR_U)
+    if inter_U and YOUR[0] - 0.5 <= inter_U[0] <= YOUR[0] + 0.5:
+        print("~ ~ ~ ~ ~ REFLECT HIT(TOP) ~ ~ ~ ~ ~")
+        return inter_U
+
+    inter_D = intersection(laser_line, YOUR_D)
+    if inter_D and YOUR[0] - 0.5 <= inter_D[0] <= YOUR[0] + 0.5:
+        print("~ ~ ~ ~ ~ REFLECT HIT (BOTTOM) ~ ~ ~ ~ ~")
+        return inter_D
+
+    inter_L = intersection(laser_line, YOUR_L)
+    if inter_L and YOUR[1] - 0.5 <= inter_L[1] <= YOUR[1] + 0.5:
+        print("~ ~ ~ ~ ~ REFLECT HIT (LEFT) ~ ~ ~ ~ ~")
+        return inter_L
+
+    inter_R = intersection(laser_line, YOUR_R)
+    if inter_R and YOUR[1] - 0.5 <= inter_R[1] <= YOUR[1] + 0.5:
+        print("~ ~ ~ ~ ~ REFLECT HIT (RIGHT) ~ ~ ~ ~ ~")
+        return inter_R
+
+    return False
 
 
 def reflect(dim, origin, laser, dist):
     # Going toward ceiling
     laser_line = line(origin, laser)
-    print("New set")
-    if hit_check(laser, laser_line):
-        print("WE'RE DONE HERE")
-        return True
+    print("New set", dist, DIST)
+    # Things got weird with the initial ray
+    # The only way to get a straight shot at first is direct aim
+    if dist == DIST:
+        if is_on(origin, laser, GUARD):
+            print("STRAIGHT SHOT!")
+            return True
+    else:
+        print("TESTING")
+        print(origin, laser, GUARD)
+        print(origin, laser, GUARD)
 
-    if is_on(origin, laser, GUARD):
-        print("* * * * * * * * * * * * * * * * * * * *")
-        print("* * * * * Straight shot * * * * *")
-        print("* * * * * * * * * * * * * * * * * * * *")
+        if is_on(origin, laser, GUARD):
+            print("STRAIGHT SHOT!")
+            return True
+        self_hit = self_hit_check(laser, laser_line)
+        guard_hit = hit_check(laser, laser_line)
+        if self_hit and guard_hit:
+            print("I sure hope the shot is closer to the guard")
+            print("Laser at", origin, "you're at", YOUR, "guard at", GUARD)
+            if get_distance(origin, YOUR) < get_distance(origin, GUARD):
+                print("You got shot!")
+            else:
+                print("You're safe!")
+
+
+            return False
+        if hit_check(laser, laser_line):
+            print("WE'RE DONE HERE")
+            return True
 
     if dist <= 0:
         print("Out of distance")
@@ -170,12 +215,17 @@ def reflect(dim, origin, laser, dist):
     if vert_line and not wall_line:
         if vert_line == FLOOR:
             print("Hitting that floor")
+            reflect(dim, vert_hit, (vert_hit[0]+(vert_hit[0]-origin[0]), origin[1]), dist - vert_dist)
+
         elif vert_line == CEILING:
             print("Hitting that ceiling")
+            reflect(dim, vert_hit, (vert_hit[0]+(vert_hit[0]-origin[0]), origin[1]), dist - vert_dist)
+
 
     # Horizontal; only hitting either wall
     elif not vert_line and wall_line:
         print("Only hitting walls")
+        reflect(dim, wall_hit, (origin[0], wall_hit[1]+(wall_hit[1]-origin[1])), dist - wall_dist)
 
     # You're going to end up hitting both eventually
     elif vert_line and wall_line:
@@ -183,7 +233,7 @@ def reflect(dim, origin, laser, dist):
         # Wall is further
         if vert_dist < wall_dist:
             if vert_line == FLOOR:
-                print("... but you're hitting the ceiling first at", vert_hit)
+                print("... but you're hitting the floor first at", vert_hit)
                 print("Angle", origin, vert_hit)
                 print("Distance left, laser direction", dist - vert_dist, laser)
                 reflect(dim, vert_hit, (vert_hit[0]+(vert_hit[0]-origin[0]), origin[1]), dist - vert_dist)
@@ -205,6 +255,10 @@ def reflect(dim, origin, laser, dist):
                 print("Angle", origin, wall_hit)
                 print("Distance left, laser direction", dist - wall_dist, laser)
                 reflect(dim, wall_hit, (origin[0], wall_hit[1]+(wall_hit[1]-origin[1])), dist - wall_dist)
+        else:
+            print("Uhhhhhh, that's a corner")
+            reflect(dim, wall_hit, origin, dist - wall_dist)
+
 
 
 
