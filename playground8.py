@@ -18,15 +18,15 @@ def hitbox_set(your_x, your_y, guard_x, guard_y):
 
         GUARD_L = line((guard_x-0.5, guard_y-0.5), (guard_x-0.5, guard_y+0.5))
         GUARD_R = line((guard_x+0.5, guard_y-0.5), (guard_x+0.5, guard_y+0.5))
-        GUARD_U = line((guard_x-0.5, guard_y-0.5), (guard_x-0.5, guard_y+0.5))
+        GUARD_U = line((guard_x-0.5, guard_y-0.5), (guard_x+0.5, guard_y-0.5))
         GUARD_D = line((guard_x-0.5, guard_y+0.5), (guard_x+0.5, guard_y+0.5))
 
         global YOUR_L, YOUR_R, YOUR_U, YOUR_D
 
         YOUR_L = line((your_x-0.5, your_y-0.5), (your_x-0.5, your_y+0.5))
         YOUR_R = line((your_x+0.5, your_y-0.5), (your_x+0.5, your_y+0.5))
-        YOUR_U = line((your_x-0.5, your_y-0.5), (your_x-0.5, your_y+0.5))
-        YOUR_D = ((your_x-0.5, your_y+0.5), (your_x+0.5, your_y+0.5))
+        YOUR_U = line((your_x-0.5, your_y-0.5), (your_x+0.5, your_y-0.5))
+        YOUR_D = line((your_x-0.5, your_y+0.5), (your_x+0.5, your_y+0.5))
 
 
 def answer(dimensions, your_position, guard_position, distance):
@@ -71,19 +71,54 @@ def answer(dimensions, your_position, guard_position, distance):
         print("My position:", your_position)
         print("Laser direction:", item)
         print("Target position:", guard_position)
-        reflect(dimensions, your_position, guard_position, item, distance)
-        print(is_on(your_position, item, guard_position))
+        reflect(dimensions, your_position, item, distance)
         print("======================")
     return answers
 
-def hit_check(laser):
-    if intersection
+def hit_check(laser, laser_line):
+    inter_U = intersection(laser_line, GUARD_U)
+    print("= = = Intersection at the top = = =", inter_U)
+    if inter_U and GUARD[0] - 0.5 <= inter_U[0] <= GUARD[0] + 0.5:
+        print("* * * * * * * * * * * * * * * * * * * *")
+        print("* * * * * REFLECT HIT(TOP) * * * * *")
+        print("* * * * * * * * * * * * * * * * * * * *")
+        return True
+    inter_D = intersection(laser_line, GUARD_D)
+    print("= = = Intersection at the floor = = =", inter_D)
+    if inter_D and GUARD[0] - 0.5 <= inter_D[0] <= GUARD[0] + 0.5:
+        print("* * * * * * * * * * * * * * * * * * * *")
+        print("* * * * * REFLECT HIT (BOTTOM) * * * * *")
+        print("* * * * * * * * * * * * * * * * * * * *")
+        return True
+
+    inter_L = intersection(laser_line, GUARD_L)
+    print("= = = Intersection at the floor = = =", inter_L)
+    if inter_L and GUARD[1] - 0.5 <= inter_L[1] <= GUARD[1] + 0.5:
+        print("* * * * * * * * * * * * * * * * * * * *")
+        print("* * * * * REFLECT HIT (LEFT) * * * * *")
+        print("* * * * * * * * * * * * * * * * * * * *")
+        return True
+    inter_R = intersection(laser_line, GUARD_R)
+    print("= = = Intersection at the floor = = =", inter_R)
+
+    if inter_L and GUARD[1] - 0.5 <= inter_R[1] <= GUARD[1] + 0.5:
+        print("* * * * * * * * * * * * * * * * * * * *")
+        print("* * * * * REFLECT HIT (RIGHT) * * * * *")
+        print("* * * * * * * * * * * * * * * * * * * *")
+        return True
 
 def reflect(dim, origin, laser, dist):
     # Going toward ceiling
     laser_line = line(origin, laser)
-    if is_on(origin, laser):
-        print("* * * * * YOU HIT THE TARGET! * * * * *")
+    if hit_check(laser, laser_line):
+        print("WE'RE DONE HERE")
+        return True
+
+    if is_on(origin, laser, GUARD):
+        print("* * * * * * * * * * * * * * * * * * * *")
+        print("* * * * * Straight shot * * * * *")
+        print("* * * * * * * * * * * * * * * * * * * *")
+
     if dist <= 0:
         print("Out of distance")
         return
@@ -93,7 +128,6 @@ def reflect(dim, origin, laser, dist):
     if origin[1] == laser[1]:
         vert_line = None
     elif origin[1] > laser[1]:
-        print(origin[1], "SHOULD BE MORE THAN", laser[1])
         vert_line = CEILING
         vert_hit = intersection(laser_line, vert_line)
         vert_dist = get_distance(origin, vert_hit)
@@ -145,9 +179,9 @@ def reflect(dim, origin, laser, dist):
         # Floor/Ceiling is further
         elif vert_dist > wall_dist:
             if wall_line == WALL_L:
-                print("... but you're hitting the left wall first")
+                print("... but you're hitting the left wall first at", wall_hit)
             elif wall_line == WALL_R:
-                print("... but you're hitting the right wall first")
+                print("... but you're hitting the right wall first", wall_hit)
 
 
 # INTERSECTIONS: I'll need to learn about this later
