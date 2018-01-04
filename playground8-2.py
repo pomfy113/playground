@@ -19,32 +19,16 @@ WALL_L = line((0,0), (0, 1))
 WALL_R = None
 FLOOR = None
 
-def hitbox_set(your_x, your_y, guard_x, guard_y):
-        global GUARD_L, GUARD_R, GUARD_U, GUARD_D
-
-        GUARD_L = line((guard_x-0.5, guard_y-0.5), (guard_x-0.5, guard_y+0.5))
-        GUARD_R = line((guard_x+0.5, guard_y-0.5), (guard_x+0.5, guard_y+0.5))
-        GUARD_U = line((guard_x-0.5, guard_y-0.5), (guard_x+0.5, guard_y-0.5))
-        GUARD_D = line((guard_x-0.5, guard_y+0.5), (guard_x+0.5, guard_y+0.5))
-
-        global YOUR_L, YOUR_R, YOUR_U, YOUR_D
-
-        YOUR_L = line((your_x-0.5, your_y-0.5), (your_x-0.5, your_y+0.5))
-        YOUR_R = line((your_x+0.5, your_y-0.5), (your_x+0.5, your_y+0.5))
-        YOUR_U = line((your_x-0.5, your_y-0.5), (your_x+0.5, your_y-0.5))
-        YOUR_D = line((your_x-0.5, your_y+0.5), (your_x+0.5, your_y+0.5))
-
 
 def answer(dimensions, your_position, guard_position, distance):
     """Begin combat protocol."""
-    global WALL_R, FLOOR
     global YOUR, GUARD
+    global WALL_R, FLOOR
+    WALL_R = line((dimensions[0], 0.0), (dimensions[0], 10.0))
+    FLOOR = line((0.0, dimensions[1]), (10.0, dimensions[1]))
     global DIST
 
     DIST = distance
-
-    WALL_R = line((dimensions[0], 0.0), (dimensions[0], 10.0))
-    FLOOR = line((0.0, dimensions[1]), (10.0, dimensions[1]))
 
     YOUR = your_position
     GUARD = guard_position
@@ -53,8 +37,6 @@ def answer(dimensions, your_position, guard_position, distance):
     your_y = your_position[1]
     guard_x = guard_position[0]
     guard_y = guard_position[1]
-
-    hitbox_set(your_x, your_y, guard_x, guard_y)
 
     distance_between = get_distance(your_position, guard_position)
 
@@ -96,90 +78,34 @@ def answer(dimensions, your_position, guard_position, distance):
         print("Target position:", guard_position)
 
         reflect(dimensions, your_position, item, distance)
-        print("======================")
+        print("==============================================================")
     return answers
-
-def hit_check(laser, laser_line):
-    inter_U = intersection(laser_line, GUARD_U)
-    if inter_U and GUARD[0] - 0.5 <= inter_U[0] <= GUARD[0] + 0.5:
-        print("* * * * * REFLECT HIT(TOP) * * * * *")
-        return inter_U
-
-    inter_D = intersection(laser_line, GUARD_D)
-    if inter_D and GUARD[0] - 0.5 <= inter_D[0] <= GUARD[0] + 0.5:
-        print("* * * * * REFLECT HIT (BOTTOM) * * * * *")
-        return inter_D
-
-    inter_L = intersection(laser_line, GUARD_L)
-    if inter_L and GUARD[1] - 0.5 <= inter_L[1] <= GUARD[1] + 0.5:
-        print("* * * * * REFLECT HIT (LEFT) * * * * *")
-        return inter_L
-
-    inter_R = intersection(laser_line, GUARD_R)
-    if inter_R and GUARD[1] - 0.5 <= inter_R[1] <= GUARD[1] + 0.5:
-        print("* * * * * REFLECT HIT (RIGHT) * * * * *")
-        return inter_R
-
-    return False
-
-def self_hit_check(laser, laser_line):
-    print(laser, YOUR)
-    inter_U = intersection(laser_line, YOUR_U)
-    if inter_U and YOUR[0] - 0.5 <= inter_U[0] <= YOUR[0] + 0.5:
-        print("~ ~ ~ ~ ~ REFLECT HIT(TOP) ~ ~ ~ ~ ~")
-        return inter_U
-
-    inter_D = intersection(laser_line, YOUR_D)
-    if inter_D and YOUR[0] - 0.5 <= inter_D[0] <= YOUR[0] + 0.5:
-        print("~ ~ ~ ~ ~ REFLECT HIT (BOTTOM) ~ ~ ~ ~ ~")
-        return inter_D
-
-    inter_L = intersection(laser_line, YOUR_L)
-    if inter_L and YOUR[1] - 0.5 <= inter_L[1] <= YOUR[1] + 0.5:
-        print("~ ~ ~ ~ ~ REFLECT HIT (LEFT) ~ ~ ~ ~ ~")
-        return inter_L
-
-    inter_R = intersection(laser_line, YOUR_R)
-    if inter_R and YOUR[1] - 0.5 <= inter_R[1] <= YOUR[1] + 0.5:
-        print("~ ~ ~ ~ ~ REFLECT HIT (RIGHT) ~ ~ ~ ~ ~")
-        return inter_R
-
-    return False
-
 
 def reflect(dim, origin, laser, dist):
     # Going toward ceiling
     laser_line = line(origin, laser)
-    print("New set", dist, DIST)
+    print(" ")
+    print("New distances, max", dist, DIST)
+    print("Origin, laser, guard", origin, laser, GUARD)
+    if collinear(origin, laser, GUARD):
+        print("* * * * * * * WE GOT IT * * * * * * * * *")
+        return
     # Things got weird with the initial ray
     # The only way to get a straight shot at first is direct aim
-    if dist == DIST:
-        if is_on(origin, laser, GUARD):
-            print("STRAIGHT SHOT!")
-            return True
-    else:
-        print("TESTING")
-        print(origin, laser, GUARD)
-        print(origin, laser, GUARD)
+    # if dist == DIST:
+    #     if is_on(origin, laser, GUARD):
+    #         print("STRAIGHT SHOT!")
+    #         return True
+    # else:
+    #     if is_on(origin, laser, GUARD):
+    #         print("* * * STRAIGHT SHOT! * * *")
+    #         if is_on(origin, laser, YOUR):
+    #             print("Also you shot yourself!")
+    #         return
+    #     else:
+    #         if is_on(origin, laser, YOUR):
+    #             print("You shot yourself")
 
-        if is_on(origin, laser, GUARD):
-            print("STRAIGHT SHOT!")
-            return True
-        self_hit = self_hit_check(laser, laser_line)
-        guard_hit = hit_check(laser, laser_line)
-        if self_hit and guard_hit:
-            print("I sure hope the shot is closer to the guard")
-            print("Laser at", origin, "you're at", YOUR, "guard at", GUARD)
-            if get_distance(origin, YOUR) < get_distance(origin, GUARD):
-                print("You got shot!")
-            else:
-                print("You're safe!")
-
-
-            return False
-        if hit_check(laser, laser_line):
-            print("WE'RE DONE HERE")
-            return True
 
     if dist <= 0:
         print("Out of distance")
@@ -196,6 +122,7 @@ def reflect(dim, origin, laser, dist):
     elif origin[1] < laser[1]:
         vert_line = FLOOR
         vert_hit = intersection(laser_line, vert_line)
+        print("INTERSECTION", vert_hit)
         vert_dist = get_distance(origin, vert_hit)
 
     # See if it goes left or right
@@ -270,9 +197,11 @@ def intersection(laser_line, target_line):
     Dx = laser_line[2] * target_line[1] - laser_line[1] * target_line[2]
     Dy = laser_line[0] * target_line[2] - laser_line[2] * target_line[0]
     if D != 0:
-        x = Dx / D
-        y = Dy / D
-        return x, y
+        print(D, Dx, Dy)
+        x = round(Dx, 4) / round(D, 4)
+        y = round(Dy, 4) / round(D, 4)
+        print("X AND Y", x, y)
+        return round(x, 4), round(y, 4)
     else:
         return False
 # INTERSECTIONS OVER
@@ -291,6 +220,13 @@ def get_distance(pt1, pt2):
 def is_on(a, b, c):
     """See if it's between a and b. x=[0], y=[1]"""
     # Use either the x or the y to see if within bounds
+    a = list(map(lambda x: round(x, 2), a))
+    b = list(map(lambda x: round(x, 2), b))
+    c = list(map(lambda x: round(x, 2), c))
+    print("CHECKING IS_ON")
+    print(a, b, c)
+
+
     if a[0] != b[0]:
         is_within = within(a[0], c[0], b[0])
     else:
@@ -298,8 +234,9 @@ def is_on(a, b, c):
     return collinear(a, b, c) and is_within
 
 def collinear(a, b, c):
-    "Return if on same line."
-    return (b[0] - a[0]) * (c[1] - a[1]) == (c[0] - a[0]) * (b[1] - a[1])
+    "Return if on same line, but let's give SOME leeway"
+    print("COLLINEAR CHECK")
+    return round((b[0] - a[0])*(c[1] - a[1]), 2) == round((c[0] - a[0]) * (b[1] - a[1]), 2)
 
 
 def within(p, q, r):
