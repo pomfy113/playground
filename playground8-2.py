@@ -30,8 +30,8 @@ def answer(dimensions, your_position, guard_position, distance):
 
     DIST = distance
 
-    YOUR = your_position
-    GUARD = guard_position
+    YOUR = tuple(your_position)
+    GUARD = tuple(guard_position)
 
     your_x = your_position[0]
     your_y = your_position[1]
@@ -63,9 +63,12 @@ def answer(dimensions, your_position, guard_position, distance):
 
     # Other three
     for item in quadrant:
+        test_set.add(item)
         test_set.add((-item[0], item[1]))
         test_set.add((item[0], -item[1]))
         test_set.add((-item[0], -item[1]))
+
+
 
     print("")
     print(test_set)
@@ -78,7 +81,7 @@ def answer(dimensions, your_position, guard_position, distance):
     print(answers)
     print("Answers should have [1, 0], [1, 2], [1, -2], [3, 2], [3, -2], [-3, 2], and [-3, -2]")
 
-    # test_set = ((1,4), (0,0))
+    # test_set = ((-1,0), (0,0))
     # Angles where it should hit
     # laser_x = your_x
     # laser_y = your_y - distance
@@ -99,11 +102,11 @@ def answer(dimensions, your_position, guard_position, distance):
 
     final = []
     for item in test_set:
-        print("My position:", your_position)
+        print("My position:", YOUR)
         print("Laser direction:", item)
-        print("Target position:", guard_position)
+        print("Target position:", GUARD)
 
-        result = reflect(dimensions, your_position, (float(item[0]+your_position[0]), float(item[1]+your_position[1])), distance)
+        result = reflect(dimensions, YOUR, (float(item[0]+your_position[0]), float(item[1]+your_position[1])), distance)
         print(result)
         if result:
             final.append(item)
@@ -121,30 +124,47 @@ def reflect(dim, origin, laser, dist):
     print("Origin, laser, guard", origin, laser, GUARD)
     guard_hit = collinear(origin, laser, GUARD)
     you_hit = collinear(origin, laser, YOUR)
-
-    if you_hit and guard_hit:
-        print("Both got hit!")
-        if get_distance(origin, YOUR) < get_distance(origin, GUARD):
-            if get_distance(origin, GUARD) <= dist:
-                print("* * * * * * * WE GOT THE OTHER GUY FIRST * * * * * * * * *")
-                return True
-            else:
-                print("Too far.")
-                return False
-        else:
-            print("Uh oh")
-            return False
-    elif dist != DIST and you_hit:
-        print("YOU GOT SHOT")
+    if origin == laser:
+        print("Suicide is not the answer")
         return False
 
-    elif guard_hit:
-        if get_distance(origin, GUARD) <= dist:
-            print("* * * * * * * WE GOT IT * * * * * * * * *")
-            return True
-        else:
-            print("Way too far")
+    # The only way you get it on first hit is if already aligned
+    if dist == DIST:
+        if guard_hit:
+            if laser[0] < origin[0] < GUARD[0] or laser[0] > origin[0] > GUARD[0] or\
+               laser[1] < origin[1] < GUARD[1] or laser[1] > origin[1] > GUARD[1]:
+                print("It's on the opposite end!")
+            else:
+                print("First shot!")
+                return True
+    # Otherwise, play normally
+    else:
+        if you_hit and guard_hit:
+            print("Both got hit!")
+            # Guard is closer
+            if get_distance(origin, YOUR) > get_distance(origin, GUARD):
+                # Make sure we have enough space to hit the guy
+                if get_distance(origin, GUARD) <= dist:
+                    print("* * * * * * * WE GOT THE OTHER GUY FIRST * * * * * * * * *")
+                    return True
+                else:
+                    print("Too far.")
+                    return False
+            # You're closer
+            else:
+                print("Uh oh")
+                return False
+        elif guard_hit:
+            if get_distance(origin, GUARD) <= dist:
+                print("* * * * * * * WE GOT IT * * * * * * * * *")
+                return True
+            else:
+                print("Way too far")
+                return False
+        elif you_hit:
+            print("YOU GOT SHOT")
             return False
+
 
 
 
