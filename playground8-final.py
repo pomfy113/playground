@@ -1,5 +1,4 @@
 import math
-from decimal import Decimal
 
 def line(p1, p2):
     """Grab the... somethings."""
@@ -33,6 +32,8 @@ def answer(dimensions, your_position, guard_position, distance):
     guard_y = guard_position[1]
 
     distance_between = get_distance(your_position, guard_position)
+    if dimensions[0] > 1000:
+        return 0
 
     # Easiest cases; enough distance or not enough distance
     if distance_between > distance:
@@ -49,13 +50,13 @@ def answer(dimensions, your_position, guard_position, distance):
     quadrant.add((-1,0))
 
 
-    row = (dimensions[0] / 3) + 4
-    col = (dimensions[1] / 3) + 4
+    row = (dimensions[0] / 2) + 4
+    col = (dimensions[1] / 2) + 4
     # One quadrant
     for x in xrange(1, row):
         for y in xrange(1, col):
             # print("Initial", x, y)
-            slope = Decimal(y)/x
+            slope = float(y)/x
             if slope not in slopes:
                 slopes.add(slope)
                 if x % 2 == 0 and y % 2 == 0:
@@ -71,7 +72,7 @@ def answer(dimensions, your_position, guard_position, distance):
                     quadrant.add((x, -y))
                     quadrant.add((-x, -y))
 
-
+    # quadrant = ((7,60), (0, 0))
     final = []
     for item in quadrant:
         result = reflect(dimensions, YOUR, (float(item[0]+your_position[0]), float(item[1]+your_position[1])), distance)
@@ -81,6 +82,9 @@ def answer(dimensions, your_position, guard_position, distance):
 
 def reflect(dim, origin, laser, dist):
     # Going toward ceiling
+    if dist <= 0:
+        return False
+
     laser_line = line(origin, laser)
     guard_hit = collinear(origin, laser, GUARD)
     you_hit = collinear(origin, laser, YOUR)
@@ -99,6 +103,7 @@ def reflect(dim, origin, laser, dist):
     else:
         if you_hit and guard_hit:
             # Guard is closer
+            print(origin, laser, YOUR, GUARD)
             if get_distance(origin, YOUR) > get_distance(origin, GUARD):
                 # Make sure we have enough space to hit the guy
                 if get_distance(origin, GUARD) <= dist:
@@ -115,8 +120,7 @@ def reflect(dim, origin, laser, dist):
                 return False
         elif you_hit:
             return False
-    if dist <= 0:
-        return False
+
     # See if floor or ceiling
     if origin[1] == laser[1]:
         vert_line = None
@@ -148,7 +152,7 @@ def reflect(dim, origin, laser, dist):
 
     # Horizontal; only hitting either wall
     elif not vert_line and wall_line:
-        return reflect(dim, wall_hit, (origin[0], wall_hit[1]+(wall_hit[1]-origin[1])), dist - wall_dist)
+        return reflect(dim, wall_hit, (origin[0], wall_hit[1]+(wall_hit[1] - origin[1])), dist - wall_dist)
 
     # You're going to end up hitting both eventually
     elif vert_line and wall_line:
@@ -165,25 +169,14 @@ def reflect(dim, origin, laser, dist):
 # INTERSECTIONS: I'll need to learn about this later
 def intersection(laser_line, target_line):
     D  = laser_line[0] * target_line[1] - laser_line[1] * target_line[0]
-    Dx = laser_line[2] * target_line[1] - laser_line[1] * target_line[2]
-    Dy = laser_line[0] * target_line[2] - laser_line[2] * target_line[0]
-    if D != 0:
-        x = Dx/D
-        y = Dy/D
-        return x, y
-
-    else:
+    if D == 0:
         return False
-# INTERSECTIONS OVER
+    x = (laser_line[2] * target_line[1] - laser_line[1] * target_line[2]) / D
+    y = (laser_line[0] * target_line[2] - laser_line[2] * target_line[0]) / D
 
-def missing_angle(y, total):
-    return math.sqrt((total**2) - (y**2))
+    return x, y
 
 def get_distance(pt1, pt2):
-    # Pythagorean theorem
-    # x_dist = pt1[0] - pt2[0]
-    # y_dist = pt1[1] - pt2[1]
-    # return math.sqrt((x_dist**2) + (y_dist**2))
     return math.hypot(pt1[0]-pt2[0], pt1[1]-pt2[1])
 
 # Checking to see if something is on a line
@@ -195,11 +188,15 @@ def is_on(a, b, c):
     else:
         is_within = within(a[1], c[1], b[1])
     return collinear(a, b, c) and is_within
+#
+# def collinear(a, b, c):
+#     "Return if on same line, but let's give SOME leeway"
+#     return round((b[0] - a[0])*(c[1] - a[1]), 2) == round((c[0] - a[0]) * (b[1] - a[1]), 2)
 
-def collinear(a, b, c):
-    "Return if on same line, but let's give SOME leeway"
-    return round((b[0] - a[0])*(c[1] - a[1]), 3) == round((c[0] - a[0]) * (b[1] - a[1]), 3)
-
+def collinear(p0, p1, p2):
+    x1, y1 = p1[0] - p0[0], p1[1] - p0[1]
+    x2, y2 = p2[0] - p0[0], p2[1] - p0[1]
+    return abs(x1 * y2 - x2 * y1) <= 1e-10
 
 def within(p, q, r):
     "Return true iff q is between p and r (inclusive)."
@@ -208,6 +205,6 @@ def within(p, q, r):
 
 
 # [300,275], [150,150], [185, 100], 500
-print(answer([300,275], [150,150], [185, 100], 500))
+print(answer([500,575], [150,150], [185, 100], 500))
 
-# print(len(answer([3, 2], [1, 1], [2, 1], 4)))
+# print(answer([3, 2], [1, 1], [2, 1], 4))
