@@ -106,9 +106,9 @@ def answer(dimensions, captain_position, badguy_position, distance):
                                             badguy_mirror_vector[1] + captain_to_badguy_diff[1]
 
             if get_distance(badguy_mirror_relative_vector) <= distance:
+                print(badguy_mirror_vector, badguy_mirror_relative_vector)
                 badguy_canonical_vector = get_canonical_vector(badguy_mirror_relative_vector)
                 badguy_mirror_relative_vector_value = get_vector_value(badguy_mirror_relative_vector)
-                print(badguy_canonical_vector)
                 if badguy_canonical_vector in shoot_vectors:
                     if shoot_vectors[badguy_canonical_vector][1] > badguy_mirror_relative_vector_value:
                         shoot_vectors[badguy_canonical_vector] = True, badguy_mirror_relative_vector_value
@@ -122,8 +122,8 @@ def answer(dimensions, captain_position, badguy_position, distance):
     print(shoot_vectors)
     return counter
 
-# print(answer([3, 2], [1, 1], [2, 1], 4))
-print(answer([300,275], [150,150], [185, 100], 500))
+print(answer([3, 2], [1, 1], [2, 1], 4))
+# print(answer([700,575], [150,150], [185, 100], 1000))
 
 #
 # T = int(raw_input())

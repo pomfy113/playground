@@ -33,4 +33,4 @@ def get_distance(pt1, pt2):
     return math.sqrt((x_dist**2) + (y_dist**2))
 
 def get_mirror(dim, x, y, you):
-    
+    if x = 0:
