@@ -1,5 +1,4 @@
 import math
-
 def line(p1, p2):
     """Grab the... somethings."""
     A = (p1[1] - p2[1])

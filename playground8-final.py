@@ -1,5 +1,5 @@
 import math
-
+from fractions import gcd
 def line(p1, p2):
     """Grab the... somethings."""
     A = (p1[1] - p2[1])
@@ -43,7 +43,7 @@ def answer(dimensions, your_position, guard_position, distance):
 
     # Let's get started
     quadrant = set()
-    slopes = set()
+    # slopes = set()
     quadrant.add((0,1))
     quadrant.add((1,0))
     quadrant.add((0,-1))
@@ -56,21 +56,14 @@ def answer(dimensions, your_position, guard_position, distance):
     for x in xrange(1, row):
         for y in xrange(1, col):
             # print("Initial", x, y)
-            slope = float(y)/x
-            if slope not in slopes:
-                slopes.add(slope)
-                if x % 2 == 0 and y % 2 == 0:
-                        coord_x = x/2
-                        coord_y = y/2
-                        quadrant.add((coord_x, coord_y))
-                        quadrant.add((-coord_x, coord_y))
-                        quadrant.add((-coord_x, -coord_y))
-                        quadrant.add((-coord_x, -coord_y))
-                else:
-                    quadrant.add((x, y))
-                    quadrant.add((-x, y))
-                    quadrant.add((x, -y))
-                    quadrant.add((-x, -y))
+            divisor = gcd(x, y)
+            temp_x = x/divisor
+            temp_y = y/divisor
+
+            quadrant.add((temp_x, temp_y))
+            quadrant.add((-temp_x, temp_y))
+            quadrant.add((temp_x, -temp_y))
+            quadrant.add((-temp_x, -temp_y))
 
     # quadrant = ((7,60), (0, 0))
     final = []
@@ -205,6 +198,6 @@ def within(p, q, r):
 
 
 # [300,275], [150,150], [185, 100], 500
-print(answer([500,575], [150,150], [185, 100], 500))
+print(answer([300,275], [150,150], [185, 100], 500))
 
 # print(answer([3, 2], [1, 1], [2, 1], 4))
